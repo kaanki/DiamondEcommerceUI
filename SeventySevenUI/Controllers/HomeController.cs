@@ -20,43 +20,50 @@ namespace SeventySevenUI.Controllers
         {
             try
             {
-            using (HttpClient client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(Constants.UrlConstant);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
-                HttpResponseMessage response = await client.GetAsync(string.Format("{0}{1}", Constants.UrlConstant, Constants.ItemPhotosApiName) );
-                if (response.IsSuccessStatusCode)
+                using (HttpClient client = new HttpClient())
                 {
-                    var data = await response.Content.ReadAsStringAsync();
-                    List<ItemPhotosViewModel> ProductList = new List<ItemPhotosViewModel>();
+                    client.BaseAddress = new Uri(Constants.UrlConstant);
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-                    ProductList = JsonConvert.DeserializeObject<List<ItemPhotosViewModel>>(data);
+                    HttpResponseMessage response = await client.GetAsync(string.Format("{0}{1}", Constants.UrlConstant, Constants.ItemPhotosApiName));
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var data = await response.Content.ReadAsStringAsync();
+                        List<ItemPhotosViewModel> ProductList = new List<ItemPhotosViewModel>();
 
-                    ViewBag.ProductPhotos = ProductList;
+                        ProductList = JsonConvert.DeserializeObject<List<ItemPhotosViewModel>>(data);
+
+                        ViewBag.ProductPhotos = ProductList;
+                    }
                 }
-            }
                 return View();
             }
             catch (Exception ex)
             {
-                return  RedirectToAction("Index","ErrorPage");
+                return RedirectToAction("Index", "ErrorPage");
             }
         }
 
         [HttpPost]
         public ActionResult UpdatePhoto(int imgid)
         {
-            
-            UpdatePhotoMethod(imgid);
+            try
+            {
 
-            return RedirectToAction("index");
+                UpdatePhotoMethod(imgid);
+
+                return RedirectToAction("index");
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Index", "ErrorPage");
+            }
         }
 
         private void UpdatePhotoMethod(int imgid)
         {
-            if (Request.Files.Count > 0)
+            if (Request.Files[0].FileName.Trim(' ') != string.Empty )
             {
                 var file = Request.Files[0];
                 using (var client = new HttpClient())
@@ -67,7 +74,7 @@ namespace SeventySevenUI.Controllers
                         id = imgid,
                         path = file.FileName
                     };
-                     
+
                     var postTask = client.PostAsJsonAsync("ItemPhotos/UpdatePhoto", value);
                     postTask.Wait();
 
@@ -81,8 +88,15 @@ namespace SeventySevenUI.Controllers
         [HttpPost]
         public ActionResult DeletePhoto(int dataId)
         {
-            DeletePhotomethod(dataId);
-            return RedirectToAction("index");
+            try
+            {
+                DeletePhotomethod(dataId);
+                return RedirectToAction("index");
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Index", "ErrorPage");
+            }
         }
         private void DeletePhotomethod(int dataId)
         {
